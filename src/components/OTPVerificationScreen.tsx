@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   StatusBar,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { router } from 'expo-router';
 
 interface OTPVerificationScreenProps {
@@ -102,82 +103,99 @@ export default function OTPVerificationScreen({
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
-      <View style={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Text style={styles.backButtonText}>←</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Main Content */}
-        <View style={styles.mainContent}>
-          <Text style={styles.title}>Verify Your Mobile Number</Text>
-          
-          <Text style={styles.subtitle}>
-            Enter the OTP sent to your mobile number {phoneNumber} to verify and proceed.{' '}
-            <Text style={styles.editLink} onPress={handleEditPhone}>
-              Edit
-            </Text>
-          </Text>
-
-          {/* OTP Input Fields */}
-          <View style={styles.otpContainer}>
-            {otp.map((digit, index) => (
-              <TextInput
-                key={index}
-                ref={(ref) => {
-                  if (ref) {
-                    inputRefs.current[index] = ref;
-                  }
-                }}
-                style={styles.otpInput}
-                value={digit}
-                onChangeText={(value) => handleOtpChange(value, index)}
-                onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
-                keyboardType="numeric"
-                maxLength={1}
-                textAlign="center"
-                selectTextOnFocus
-                autoFocus={index === 0}
-              />
-            ))}
+      <KeyboardAwareScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid={true}
+        extraScrollHeight={90}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.content}>
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+              <Text style={styles.backButtonText}>←</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Resend OTP */}
-          <View style={styles.resendContainer}>
-            <Text style={styles.resendText}>
-              Resend OTP in{' '}
-              <Text style={styles.timerText}>
-                {isResendDisabled ? formatTime(timeLeft) : '00:00'}
+          {/* Main Content */}
+          <View style={styles.mainContent}>
+            <Text style={styles.title}>Verify Your Mobile Number</Text>
+            
+            <Text style={styles.subtitle}>
+              Enter the OTP sent to your mobile number {phoneNumber} to verify and proceed.{' '}
+              <Text style={styles.editLink} onPress={handleEditPhone}>
+                Edit
               </Text>
             </Text>
-            {!isResendDisabled && (
-              <TouchableOpacity onPress={handleResendOTP}>
-                <Text style={styles.resendButton}>Resend OTP</Text>
-              </TouchableOpacity>
-            )}
+
+            {/* OTP Input Fields */}
+            <View style={styles.otpContainer}>
+              {otp.map((digit, index) => (
+                <TextInput
+                  key={index}
+                  ref={(ref) => {
+                    if (ref) {
+                      inputRefs.current[index] = ref;
+                    }
+                  }}
+                  style={styles.otpInput}
+                  value={digit}
+                  onChangeText={(value) => handleOtpChange(value, index)}
+                  onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
+                  keyboardType="numeric"
+                  maxLength={1}
+                  textAlign="center"
+                  selectTextOnFocus
+                  autoFocus={index === 0}
+                />
+              ))}
+            </View>
+
+            {/* Resend OTP */}
+            <View style={styles.resendContainer}>
+              <Text style={styles.resendText}>
+                Resend OTP in{' '}
+                <Text style={styles.timerText}>
+                  {isResendDisabled ? formatTime(timeLeft) : '00:00'}
+                </Text>
+              </Text>
+              {!isResendDisabled && (
+                <TouchableOpacity onPress={handleResendOTP}>
+                  <Text style={styles.resendButton}>Resend OTP</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          {/* Continue Button */}
+          <View style={styles.bottomContainer}>
+            <TouchableOpacity
+              style={[styles.continueButton, !isOtpComplete && styles.continueButtonDisabled]}
+              onPress={handleVerify}
+              disabled={!isOtpComplete}
+            >
+              <Text style={styles.continueButtonText}>Continue</Text>
+            </TouchableOpacity>
           </View>
         </View>
-
-        {/* Continue Button */}
-        <View style={styles.bottomContainer}>
-          <TouchableOpacity
-            style={[styles.continueButton, !isOtpComplete && styles.continueButtonDisabled]}
-            onPress={handleVerify}
-            disabled={!isOtpComplete}
-          >
-            <Text style={styles.continueButtonText}>Continue</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#ffffff' },
-  content: { flex: 1, paddingHorizontal: 20 },
+  scrollView: { flex: 1 },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 40,
+    paddingBottom: 40,
+  },
+  content: { flex: 1 },
   header: { paddingTop: 10, paddingBottom: 20 },
   backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#f5f5f5', justifyContent: 'center', alignItems: 'center' },
   backButtonText: { fontSize: 18, color: '#333', fontFamily: 'Arquitecta' },
@@ -191,7 +209,7 @@ const styles = StyleSheet.create({
   resendText: { fontSize: 14, fontFamily: 'Arquitecta', color: '#999' },
   timerText: { color: '#333', fontFamily: 'ArquitectaBold' },
   resendButton: { fontSize: 14, fontFamily: 'ArquitectaMedium', color: '#8B5CF6', marginTop: 5 },
-  bottomContainer: { marginBottom: 60 },
+  bottomContainer: { marginTop: 'auto', marginBottom: 20 },
   continueButton: { backgroundColor: '#D81030', paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
   continueButtonDisabled: { backgroundColor: '#ccc' },
   continueButtonText: { color: '#ffffff', fontSize: 18, fontFamily: 'ArquitectaBold' },
