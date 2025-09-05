@@ -1,16 +1,27 @@
 import React, { useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
 import SplashScreen from '../components/SplashScreen';
 
 export default function RootLayout() {
   const [showSplash, setShowSplash] = useState(true);
+  const [fontsLoaded] = useFonts({
+    'Arquitecta': require('../assets/fonts/Arquitecta/Arquitecta.otf'),
+    'ArquitectaBold': require('../assets/fonts/Arquitecta/ArquitectaBold.otf'),
+    'ArquitectaMedium': require('../assets/fonts/Arquitecta/ArquitectaMedium.otf'),
+    'ArquitectaLight': require('../assets/fonts/Arquitecta/ArquitectaLight.otf'),
+    'ArquitectaThin': require('../assets/fonts/Arquitecta/ArquitectaThin.otf'),
+    'ArquitectaHeavy': require('../assets/fonts/Arquitecta/ArquitectaHeavy.otf'),
+    'ArquitectaBook': require('../assets/fonts/Arquitecta/ArquitectaBook.otf'),
+    'ArquitectaBlack': require('../assets/fonts/Arquitecta/ArquitectaBlack.otf'),
+  });
 
   const handleSplashFinish = () => {
     setShowSplash(false);
   };
 
-  if (showSplash) {
+  if (showSplash || !fontsLoaded) {
     return <SplashScreen onFinish={handleSplashFinish} />;
   }
 
@@ -18,24 +29,9 @@ export default function RootLayout() {
     <>
       <Stack>
         <Stack.Screen 
-          name="index" 
+          name="(auth)" 
           options={{ 
-            title: 'Login',
             headerShown: false,
-          }} 
-        />
-        <Stack.Screen 
-          name="bus-owner-login" 
-          options={{ 
-            title: 'Bus Owner Login',
-            headerStyle: {
-              backgroundColor: '#007AFF',
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-            headerTitleAlign: 'center',
           }} 
         />
         <Stack.Screen 
