@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { router } from 'expo-router';
 
-export default function HomeScreen() {
+export default function DashboardScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>BB Admin Dashboard</Text>

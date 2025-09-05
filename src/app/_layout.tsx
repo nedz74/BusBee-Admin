@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import SplashScreen from '../src/components/SplashScreen';
+import SplashScreen from '../components/SplashScreen';
 
 export default function RootLayout() {
   const [showSplash, setShowSplash] = useState(true);
@@ -20,7 +20,28 @@ export default function RootLayout() {
         <Stack.Screen 
           name="index" 
           options={{ 
-            title: 'BB Admin',
+            title: 'Login',
+            headerShown: false,
+          }} 
+        />
+        <Stack.Screen 
+          name="bus-owner-login" 
+          options={{ 
+            title: 'Bus Owner Login',
+            headerStyle: {
+              backgroundColor: '#007AFF',
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+            headerTitleAlign: 'center',
+          }} 
+        />
+        <Stack.Screen 
+          name="dashboard" 
+          options={{ 
+            title: 'BB Admin Dashboard',
             headerStyle: {
               backgroundColor: '#007AFF',
             },
