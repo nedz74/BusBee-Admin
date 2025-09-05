@@ -7,6 +7,7 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
+  Keyboard,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { router } from 'expo-router';
@@ -27,6 +28,8 @@ export default function OTPVerificationScreen({
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timeLeft, setTimeLeft] = useState(120); // 2 minutes in seconds
   const [isResendDisabled, setIsResendDisabled] = useState(true);
+  const [bottomMargin, setBottomMargin] = useState(313); // Initial margin on mount
+  const [hasKeyboardBeenRemoved, setHasKeyboardBeenRemoved] = useState(false);
   const inputRefs = useRef<TextInput[]>([]);
 
   // Timer countdown
@@ -40,6 +43,29 @@ export default function OTPVerificationScreen({
       setIsResendDisabled(false);
     }
   }, [timeLeft]);
+
+  // Keyboard event listeners for margin management
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
+      // Adjust margin when keyboard is shown for the first time
+      if (!hasKeyboardBeenRemoved) {
+        setBottomMargin(20);
+      }
+    });
+
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      // Only change margin on first keyboard removal
+      if (!hasKeyboardBeenRemoved) {
+        setBottomMargin(20);
+        setHasKeyboardBeenRemoved(true);
+      }
+    });
+
+    return () => {
+      keyboardDidShowListener?.remove();
+      keyboardDidHideListener?.remove();
+    };
+  }, [hasKeyboardBeenRemoved]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -108,16 +134,16 @@ export default function OTPVerificationScreen({
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         enableOnAndroid={true}
-        extraScrollHeight={90}
+        extraScrollHeight={0}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.content}>
           {/* Header */}
-          <View style={styles.header}>
+          {/* <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
               <Text style={styles.backButtonText}>←</Text>
             </TouchableOpacity>
-          </View>
+          </View> */}
 
           {/* Main Content */}
           <View style={styles.mainContent}>
@@ -170,7 +196,7 @@ export default function OTPVerificationScreen({
           </View>
 
           {/* Continue Button */}
-          <View style={styles.bottomContainer}>
+          <View style={[styles.bottomContainer, { marginBottom: bottomMargin }]}>
             <TouchableOpacity
               style={[styles.continueButton, !isOtpComplete && styles.continueButtonDisabled]}
               onPress={handleVerify}
@@ -209,7 +235,7 @@ const styles = StyleSheet.create({
   resendText: { fontSize: 14, fontFamily: 'Arquitecta', color: '#999' },
   timerText: { color: '#333', fontFamily: 'ArquitectaBold' },
   resendButton: { fontSize: 14, fontFamily: 'ArquitectaMedium', color: '#8B5CF6', marginTop: 5 },
-  bottomContainer: { marginTop: 'auto', marginBottom: 20 },
+  bottomContainer: { marginTop: 'auto' },
   continueButton: { backgroundColor: '#D81030', paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
   continueButtonDisabled: { backgroundColor: '#ccc' },
   continueButtonText: { color: '#ffffff', fontSize: 18, fontFamily: 'ArquitectaBold' },

@@ -103,7 +103,7 @@ export default function LoginScreen({ mode = "user" }: { mode?: LoginMode }) {
               placeholderTextColor="#999"
               value={phoneNumber}
               onChangeText={handlePhoneChange}
-              keyboardType="phone-pad"
+              keyboardType="numeric"
               maxLength={10}
             />
             <View
@@ -149,83 +149,24 @@ export default function LoginScreen({ mode = "user" }: { mode?: LoginMode }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#ffffff" },
   scrollView: { flex: 1 },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 40,
-    paddingBottom: 40,
-  },
+  scrollContent: { flexGrow: 1, justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 40, paddingBottom: 40 },
   topContent: { marginTop: 30 },
   bottomContent: { marginTop: "auto" },
-
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 40,
-    justifyContent: "space-between",
-    minHeight: "100%",
-  },
-  title: {
-    fontSize: 32,
-    fontFamily: "ArquitectaBold",
-    color: "#333",
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontSize: 16,
-    fontFamily: "Arquitecta",
-    color: "#666",
-    marginBottom: 50,
-    lineHeight: 22,
-  },
+  content: { flex: 1, paddingHorizontal: 20, paddingTop: 40, justifyContent: "space-between", minHeight: "100%" },
+  title: { fontSize: 32, fontFamily: "ArquitectaBold", color: "#333", marginBottom: 12 },
+  subtitle: { fontSize: 16, fontFamily: "Arquitecta", color: "#666", marginBottom: 50, lineHeight: 22 },
   phoneInputContainer: { marginBottom: 40 },
-  phoneInput: {
-    fontSize: 16,
-    fontFamily: "Arquitecta",
-    color: "#333",
-    paddingVertical: 12,
-  },
+  phoneInput: { fontSize: 16, fontFamily: "Arquitecta", color: "#333", paddingVertical: 12 },
   phoneInputError: { color: "#FF3B30" },
   inputUnderline: { height: 1, backgroundColor: "#e0e0e0" },
   inputUnderlineError: { backgroundColor: "#FF3B30" },
-  errorText: {
-    fontSize: 14,
-    fontFamily: "Arquitecta",
-    color: "#FF3B30",
-    marginTop: 8,
-    marginLeft: 4,
-  },
+  errorText: { fontSize: 14, fontFamily: "Arquitecta", color: "#FF3B30", marginTop: 8, marginLeft: 4 },
   guestButton: { alignItems: "center", marginBottom: 30 },
-  guestText: {
-    fontSize: 16,
-    fontFamily: "Arquitecta",
-    color: "#333",
-    textDecorationLine: "underline",
-  },
+  guestText: { fontSize: 16, fontFamily: "Arquitecta", color: "#333", textDecorationLine: "underline" },
   termsContainer: { alignItems: "center", marginBottom: 10 },
-  termsText: {
-    fontSize: 14,
-    fontFamily: "Arquitecta",
-    color: "#666",
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  termsLink: {
-    color: "#8B5CF6",
-    textDecorationLine: "underline",
-    fontFamily: "ArquitectaMedium",
-  },
-  continueButton: {
-    backgroundColor: "#D81030",
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  continueButtonText: {
-    color: "#ffffff",
-    fontSize: 18,
-    fontFamily: "ArquitectaBold",
-  },
+  termsText: { fontSize: 14, fontFamily: "Arquitecta", color: "#666", textAlign: "center", lineHeight: 20 },
+  termsLink: { color: "#8B5CF6", textDecorationLine: "underline", fontFamily: "ArquitectaMedium" },
+  continueButton: { backgroundColor: "#D81030", paddingVertical: 10, borderRadius: 8, alignItems: "center", marginBottom: 20 },
+  continueButtonText: { color: "#ffffff", fontSize: 18, fontFamily: "ArquitectaBold" },
 });
+
