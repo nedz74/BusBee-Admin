@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 export default function Dashboard() {
   const [isSideNavOpen, setIsSideNavOpen] = useState(false);
@@ -11,6 +12,14 @@ export default function Dashboard() {
 
   const closeSideNav = () => {
     setIsSideNavOpen(false);
+  };
+
+  const navigateToMyBuses = () => {
+    // Close side nav first, then navigate after a brief delay
+    closeSideNav();
+    setTimeout(() => {
+      router.push('/(tabs)/my-buses');
+    }, 100); // Small delay to let the modal close animation complete
   };
 
   return (
@@ -164,7 +173,7 @@ export default function Dashboard() {
                 <Text style={styles.sideNavItemText}>Dashboard</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.sideNavItem}>
+              <TouchableOpacity style={styles.sideNavItem} onPress={navigateToMyBuses}>
                 <Ionicons name="bus" size={20} color="#6B46C1" />
                 <Text style={styles.sideNavItemText}>My Buses</Text>
               </TouchableOpacity>

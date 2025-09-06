@@ -1,34 +1,33 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
+import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#007AFF',
+        tabBarActiveTintColor: '#6B46C1',
         tabBarInactiveTintColor: '#8E8E93',
-        tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopWidth: 1,
-          borderTopColor: '#E5E5EA',
-        },
-        headerStyle: {
-          backgroundColor: '#007AFF',
-        },
-        headerTintColor: '#FFFFFF',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
+        tabBarStyle: { backgroundColor: '#fff' },
+        headerShown: false,
       }}
     >
       <Tabs.Screen
         name="dashboard"
         options={{
           title: 'Dashboard',
-          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="my-buses"
+        options={{
+          title: 'My Buses',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="bus" size={size} color={color} />
           ),
         }}
       />
