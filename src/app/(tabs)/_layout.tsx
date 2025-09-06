@@ -11,6 +11,7 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: '#8E8E93',
         tabBarStyle: { backgroundColor: '#fff' },
         headerShown: false,
+        header: () => null,
       }}
     >
       <Tabs.Screen
@@ -19,15 +20,6 @@ export default function TabsLayout() {
           title: 'Dashboard',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="my-buses"
-        options={{
-          title: 'My Buses',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="bus" size={size} color={color} />
           ),
         }}
       />

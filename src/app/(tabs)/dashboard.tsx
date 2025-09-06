@@ -15,11 +15,38 @@ export default function Dashboard() {
   };
 
   const navigateToMyBuses = () => {
-    // Close side nav first, then navigate after a brief delay
     closeSideNav();
-    setTimeout(() => {
-      router.push('/(tabs)/my-buses');
-    }, 100); // Small delay to let the modal close animation complete
+    router.push('/my-buses');
+  };
+
+  const navigateToSchedule = () => {
+    closeSideNav();
+    router.push('/schedule');
+  };
+
+  const navigateToPassengers = () => {
+    closeSideNav();
+    router.push('/passengers');
+  };
+
+  const navigateToPayments = () => {
+    closeSideNav();
+    router.push('/payments');
+  };
+
+  const navigateToReports = () => {
+    closeSideNav();
+    router.push('/reports');
+  };
+
+  const navigateToSettings = () => {
+    closeSideNav();
+    router.push('/settings');
+  };
+
+  const navigateToHelpSupport = () => {
+    closeSideNav();
+    router.push('/help-support');
   };
 
   return (
@@ -178,32 +205,32 @@ export default function Dashboard() {
                 <Text style={styles.sideNavItemText}>My Buses</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.sideNavItem}>
+              <TouchableOpacity style={styles.sideNavItem} onPress={navigateToSchedule}>
                 <Ionicons name="calendar" size={20} color="#6B46C1" />
                 <Text style={styles.sideNavItemText}>Schedule</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.sideNavItem}>
+              <TouchableOpacity style={styles.sideNavItem} onPress={navigateToPassengers}>
                 <Ionicons name="people" size={20} color="#6B46C1" />
                 <Text style={styles.sideNavItemText}>Passengers</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.sideNavItem}>
+              <TouchableOpacity style={styles.sideNavItem} onPress={navigateToPayments}>
                 <Ionicons name="card" size={20} color="#6B46C1" />
                 <Text style={styles.sideNavItemText}>Payments</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.sideNavItem}>
+              <TouchableOpacity style={styles.sideNavItem} onPress={navigateToReports}>
                 <Ionicons name="analytics" size={20} color="#6B46C1" />
                 <Text style={styles.sideNavItemText}>Reports</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.sideNavItem}>
+              <TouchableOpacity style={styles.sideNavItem} onPress={navigateToSettings}>
                 <Ionicons name="settings" size={20} color="#6B46C1" />
                 <Text style={styles.sideNavItemText}>Settings</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.sideNavItem}>
+              <TouchableOpacity style={styles.sideNavItem} onPress={navigateToHelpSupport}>
                 <Ionicons name="help-circle" size={20} color="#6B46C1" />
                 <Text style={styles.sideNavItemText}>Help & Support</Text>
               </TouchableOpacity>
