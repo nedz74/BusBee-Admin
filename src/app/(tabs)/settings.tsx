@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
-import { router } from 'expo-router';
+import { View, Text, StyleSheet, Switch } from 'react-native';
 
 export default function SettingsScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
@@ -33,12 +32,6 @@ export default function SettingsScreen() {
         </View>
       </View>
       
-      <TouchableOpacity 
-        style={styles.button}
-        onPress={() => router.back()}
-      >
-        <Text style={styles.buttonText}>Go Back</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -56,12 +49,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 10,
+    fontFamily: 'ArquitectaBold',
   },
   subtitle: {
     fontSize: 16,
     color: '#666',
     marginBottom: 30,
     textAlign: 'center',
+    fontFamily: 'ArquitectaMedium',
   },
   settingsContainer: {
     backgroundColor: 'white',
@@ -89,18 +84,6 @@ const styles = StyleSheet.create({
   settingLabel: {
     fontSize: 16,
     color: '#333',
-  },
-  button: {
-    backgroundColor: '#FF3B30',
-    paddingHorizontal: 30,
-    paddingVertical: 15,
-    borderRadius: 8,
-    minWidth: 200,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontFamily: 'Arquitecta',
   },
 });

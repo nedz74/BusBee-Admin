@@ -35,45 +35,9 @@ export default function RootLayout() {
           }} 
         />
         <Stack.Screen 
-          name="dashboard" 
+          name="(tabs)" 
           options={{ 
-            title: 'BB Admin Dashboard',
-            headerStyle: {
-              backgroundColor: '#007AFF',
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-            headerTitleAlign: 'center',
-          }} 
-        />
-        <Stack.Screen 
-          name="profile" 
-          options={{ 
-            title: 'Profile',
-            headerStyle: {
-              backgroundColor: '#007AFF',
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-            headerTitleAlign: 'center',
-          }} 
-        />
-        <Stack.Screen 
-          name="settings" 
-          options={{ 
-            title: 'Settings',
-            headerStyle: {
-              backgroundColor: '#007AFF',
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-            headerTitleAlign: 'center',
+            headerShown: false,
           }} 
         />
       </Stack>
