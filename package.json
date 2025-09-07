@@ -18,7 +18,10 @@
     "lottie-react-native": "^7.2.2",
     "react": "19.0.0",
     "react-native": "^0.79.5",
-    "react-native-keyboard-aware-scroll-view": "^0.9.5"
+    "react-native-keyboard-controller": "^1.18.6",
+    "react-native-safe-area-context": "5.4.0",
+    "react-native-screens": "~4.11.1",
+    "react-native-reanimated": "~3.17.4"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

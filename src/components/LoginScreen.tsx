@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,8 +7,10 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
+  ScrollView,
+  Keyboard,
+  Platform,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { router } from "expo-router";
 
 type LoginMode = "user" | "bus-owner";
@@ -16,6 +18,31 @@ type LoginMode = "user" | "bus-owner";
 export default function LoginScreen({ mode = "user" }: { mode?: LoginMode }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneError, setPhoneError] = useState("");
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+        setIsKeyboardVisible(true);
+      }
+    );
+
+    const keyboardDidHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+        setIsKeyboardVisible(false);
+      }
+    );
+
+    return () => {
+      keyboardDidShowListener?.remove();
+      keyboardDidHideListener?.remove();
+    };
+  }, []);
 
   const validatePhoneNumber = (phone: string) => {
     // Remove any non-numeric characters
@@ -76,13 +103,15 @@ export default function LoginScreen({ mode = "user" }: { mode?: LoginMode }) {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
-      <KeyboardAwareScrollView
+      <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          isKeyboardVisible && { paddingBottom: keyboardHeight + 35 }
+        ]}
         keyboardShouldPersistTaps="handled"
-        enableOnAndroid={true}
-        extraScrollHeight={0}
         showsVerticalScrollIndicator={false}
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
       >
         {/* Top Content */}
         <View style={styles.topContent}>
@@ -141,7 +170,7 @@ export default function LoginScreen({ mode = "user" }: { mode?: LoginMode }) {
             <Text style={styles.continueButtonText}>Continue</Text>
           </TouchableOpacity>
         </View>
-      </KeyboardAwareScrollView>
+      </ScrollView>
     </SafeAreaView>
   );
 }

@@ -179,7 +179,7 @@ export default function Dashboard() {
       <Modal
         visible={isSideNavOpen}
         transparent={true}
-        animationType="none"
+        animationType="slide"
         onRequestClose={closeSideNav}
       >
         <View style={styles.modalOverlay}>

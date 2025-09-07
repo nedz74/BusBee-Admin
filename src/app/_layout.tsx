@@ -3,10 +3,11 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import SplashScreen from '../components/SplashScreen';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 export default function RootLayout() {
   const [showSplash, setShowSplash] = useState(true);
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     'Arquitecta': require('../assets/fonts/Arquitecta/Arquitecta.otf'),
     'ArquitectaBold': require('../assets/fonts/Arquitecta/ArquitectaBold.otf'),
     'ArquitectaMedium': require('../assets/fonts/Arquitecta/ArquitectaMedium.otf'),
@@ -21,12 +22,18 @@ export default function RootLayout() {
     setShowSplash(false);
   };
 
-  if (showSplash || !fontsLoaded) {
+  // Show splash screen while fonts are loading or if there's an error
+  if (showSplash || (!fontsLoaded && !fontError)) {
     return <SplashScreen onFinish={handleSplashFinish} />;
   }
 
+  // If fonts failed to load, continue anyway with system fonts
+  if (fontError) {
+    console.warn('Font loading error:', fontError);
+  }
+
   return (
-    <>
+    <ErrorBoundary>
       <Stack>
         <Stack.Screen 
           name="(auth)" 
@@ -84,6 +91,6 @@ export default function RootLayout() {
         />
       </Stack>
       <StatusBar style="light" />
-    </>
+    </ErrorBoundary>
   );
 }
