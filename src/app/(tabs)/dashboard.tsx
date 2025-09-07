@@ -16,37 +16,37 @@ export default function Dashboard() {
 
   const navigateToMyBuses = () => {
     closeSideNav();
-    router.push('/my-buses');
+    router.push('/sideNavScreens/my-buses');
   };
 
   const navigateToSchedule = () => {
     closeSideNav();
-    router.push('/schedule');
+    router.push('/sideNavScreens/schedule');
   };
 
   const navigateToPassengers = () => {
     closeSideNav();
-    router.push('/passengers');
+    router.push('/sideNavScreens/passengers');
   };
 
   const navigateToPayments = () => {
     closeSideNav();
-    router.push('/payments');
+    router.push('/sideNavScreens/payments');
   };
 
   const navigateToReports = () => {
     closeSideNav();
-    router.push('/reports');
+    router.push('/sideNavScreens/reports');
   };
 
   const navigateToSettings = () => {
     closeSideNav();
-    router.push('/settings');
+    router.push('/sideNavScreens/settings');
   };
 
   const navigateToHelpSupport = () => {
     closeSideNav();
-    router.push('/help-support');
+    router.push('/sideNavScreens/help-support');
   };
 
   return (
