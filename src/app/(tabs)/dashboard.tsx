@@ -49,6 +49,14 @@ export default function Dashboard() {
     router.push('/sideNavScreens/help-support');
   };
 
+  const navigateToRevenueDetails = () => {
+    router.push('/sideNavScreens/revenue-details');
+  };
+
+  const navigateToBusDetails = (busId: string) => {
+    router.push(`/sideNavScreens/bus-details/${busId}`);
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#6B46C1" />
@@ -71,52 +79,16 @@ export default function Dashboard() {
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Revenue Live Update Card */}
-        <View style={styles.revenueCard}>
+        <TouchableOpacity style={styles.revenueCard} onPress={navigateToRevenueDetails}>
           <Text style={styles.cardTitle}>Revenue Live Update</Text>
           <Text style={styles.revenueAmount}>₹12,350</Text>
           <Text style={styles.revenueSubtitle}>Total Revenue Today</Text>
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>34</Text>
-              <Text style={styles.statLabel}>Bookings</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>20</Text>
-              <Text style={styles.statLabel}>Seats Available</Text>
-            </View>
+          <View style={styles.revenueCardFooter}>
+            <Text style={styles.revenueCardFooterText}>Tap to view details</Text>
+            <Ionicons name="chevron-forward" size={16} color="#E0E7FF" />
           </View>
-        </View>
+        </TouchableOpacity>
 
-        {/* Buses Overview */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Buses Overview</Text>
-          <View style={styles.busCard}>
-            <View style={styles.busStatusRow}>
-              <View style={styles.statusBadge}>
-                <View style={[styles.statusDot, { backgroundColor: '#10B981' }]} />
-                <Text style={styles.statusText}>On Route</Text>
-              </View>
-              <View style={styles.statusBadge}>
-                <View style={[styles.statusDot, { backgroundColor: '#F59E0B' }]} />
-                <Text style={styles.statusText}>Parked</Text>
-              </View>
-              <View style={styles.statusBadge}>
-                <View style={[styles.statusDot, { backgroundColor: '#EF4444' }]} />
-                <Text style={styles.statusText}>Maintenance</Text>
-              </View>
-            </View>
-            <View style={styles.busInfoRow}>
-              <View style={styles.busInfoItem}>
-                <Ionicons name="car" size={20} color="#6B46C1" />
-                <Text style={styles.busInfoText}>Fuel: 75%</Text>
-              </View>
-              <View style={styles.busInfoItem}>
-                <Ionicons name="construct" size={20} color="#6B46C1" />
-                <Text style={styles.busInfoText}>Next Service: Oct 25</Text>
-              </View>
-            </View>
-          </View>
-        </View>
 
         {/* Today's Trips */}
         <View style={styles.section}>
@@ -127,26 +99,45 @@ export default function Dashboard() {
             </TouchableOpacity>
           </View>
           <View style={styles.tripCard}>
-            <View style={styles.tripItem}>
+            <TouchableOpacity style={styles.tripItem} onPress={() => navigateToBusDetails('KB-01')} activeOpacity={0.7}>
               <View style={styles.tripIcon}>
                 <Ionicons name="bus" size={20} color="#FFFFFF" />
               </View>
               <View style={styles.tripDetails}>
-                <Text style={styles.tripRoute}>Kochi ↔ Thrissur</Text>
-                <Text style={styles.tripTime}>10:30 AM</Text>
+                <Text style={styles.tripBusName}>Bus KB-01</Text>
+                <Text style={styles.tripRoute}>North Paravur – High Court</Text>
               </View>
-              <Text style={styles.tripSeats}>Seats 12</Text>
-            </View>
-            <View style={styles.tripItem}>
+              <View style={styles.tripStatus}>
+                <View style={[styles.statusIndicator, { backgroundColor: '#10B981' }]} />
+                <Text style={styles.tripStatusText}>Active</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.tripItem} onPress={() => navigateToBusDetails('KB-02')} activeOpacity={0.7}>
               <View style={styles.tripIcon}>
                 <Ionicons name="bus" size={20} color="#FFFFFF" />
               </View>
               <View style={styles.tripDetails}>
-                <Text style={styles.tripRoute}>Ernakulam ↔ Aluva</Text>
-                <Text style={styles.tripTime}>2:00 PM</Text>
+                <Text style={styles.tripBusName}>Bus KB-02</Text>
+                <Text style={styles.tripRoute}>High Court – Kakkanad</Text>
               </View>
-              <Text style={styles.tripSeats}>Seats 5</Text>
-            </View>
+              <View style={styles.tripStatus}>
+                <View style={[styles.statusIndicator, { backgroundColor: '#10B981' }]} />
+                <Text style={styles.tripStatusText}>Active</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.tripItem} onPress={() => navigateToBusDetails('KB-03')} activeOpacity={0.7}>
+              <View style={styles.tripIcon}>
+                <Ionicons name="bus" size={20} color="#FFFFFF" />
+              </View>
+              <View style={styles.tripDetails}>
+                <Text style={styles.tripBusName}>Bus KB-03</Text>
+                <Text style={styles.tripRoute}>Cheranallor – Edappally</Text>
+              </View>
+              <View style={styles.tripStatus}>
+                <View style={[styles.statusIndicator, { backgroundColor: '#EF4444' }]} />
+                <Text style={styles.tripStatusText}>Inactive</Text>
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -258,32 +249,24 @@ const styles = StyleSheet.create({
   notificationDot: { position: 'absolute', top: -2, right: -2, width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444' },
   scrollView: { flex: 1, paddingHorizontal: 20 },
   revenueCard: { backgroundColor: '#6B46C1', borderRadius: 16, padding: 24, marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4 },
+  revenueCardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(255, 255, 255, 0.2)' },
+  revenueCardFooterText: { fontSize: 14, color: '#E0E7FF', marginRight: 8 },
   cardTitle: { fontSize: 16, color: '#E0E7FF', marginBottom: 8 },
   revenueAmount: { fontSize: 32, fontWeight: 'bold', color: '#FFFFFF', marginBottom: 4 },
   revenueSubtitle: { fontSize: 14, color: '#E0E7FF', marginBottom: 20 },
-  statsRow: { flexDirection: 'row', justifyContent: 'space-around' },
-  statItem: { alignItems: 'center' },
-  statNumber: { fontSize: 24, fontWeight: 'bold', color: '#FFFFFF' },
-  statLabel: { fontSize: 12, color: '#E0E7FF', marginTop: 4 },
   section: { marginBottom: 24 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#1F2937' },
   seeAllText: { fontSize: 14, color: '#6B46C1', fontWeight: '500' },
-  busCard: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
-  busStatusRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 16 },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-  statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
-  statusText: { fontSize: 12, fontWeight: '500', color: '#374151' },
-  busInfoRow: { flexDirection: 'row', justifyContent: 'space-around' },
-  busInfoItem: { flexDirection: 'row', alignItems: 'center' },
-  busInfoText: { fontSize: 14, color: '#6B7280', marginLeft: 6 },
   tripCard: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
   tripItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
   tripIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#6B46C1', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   tripDetails: { flex: 1 },
-  tripRoute: { fontSize: 16, fontWeight: '500', color: '#1F2937' },
-  tripTime: { fontSize: 14, color: '#6B7280', marginTop: 2 },
-  tripSeats: { fontSize: 14, fontWeight: '500', color: '#6B46C1' },
+  tripBusName: { fontSize: 14, fontWeight: '700', color: '#6B46C1', marginBottom: 2 },
+  tripRoute: { fontSize: 16, fontWeight: '400', color: '#1F2937' },
+  tripStatus: { alignItems: 'center', justifyContent: 'flex-end', minWidth: 60 },
+  statusIndicator: { width: 8, height: 8, borderRadius: 4, marginBottom: 2 },
+  tripStatusText: { fontSize: 9, fontWeight: '600', color: '#374151', textTransform: 'uppercase', letterSpacing: 0.5 },
   notificationCard: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
   notificationItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
   notificationIcon: { marginRight: 12 },
