@@ -1,15 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Alert, Animated } from 'react-native';
 import { PanGestureHandler, PanGestureHandlerGestureEvent, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import StopForm from '../../../components/StopForm';
 
 export default function TripDetails() {
   const { tripId, busId, time, arrival, route, passengers: passengerCount, revenue, driver, status } = useLocalSearchParams();
   
   const [swipeAnimations, setSwipeAnimations] = useState<{[key: number]: Animated.Value}>({});
   const [expandedStop, setExpandedStop] = useState<number | null>(null);
+  const [showStopForm, setShowStopForm] = useState(false);
+  const [formMode, setFormMode] = useState<'add' | 'edit'>('add');
+  const [selectedStop, setSelectedStop] = useState<any>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const getStatusColor = (status: string) => {
     const colors = {
@@ -111,10 +116,49 @@ export default function TripDetails() {
     }
   };
 
+  const scrollToForm = () => {
+    // Scroll to show the form in the visible area
+    // Trip overview height is approximately 200px, so scroll to show form below it
+    scrollViewRef.current?.scrollTo({ y: 350, animated: true });
+  };
+
   const handleDropdownAction = (action: string, stopId: number) => {
-    // For now, just show an alert - functionality will be implemented later
-    Alert.alert('Action Selected', `${action} for stop ${stopId}`);
-    setExpandedStop(null);
+    const stop = busStops.find(s => s.id === stopId);
+    
+    if (action === 'Edit Stop') {
+      setFormMode('edit');
+      setSelectedStop(stop);
+      setShowStopForm(true);
+      setExpandedStop(null);
+      // Scroll to show form in visible area
+      setTimeout(() => {
+        scrollToForm();
+      }, 100);
+    } else if (action === 'Add Stop') {
+      setFormMode('add');
+      setSelectedStop(null);
+      setShowStopForm(true);
+      setExpandedStop(null);
+      // Scroll to show form in visible area
+      setTimeout(() => {
+        scrollToForm();
+      }, 100);
+    }
+  };
+
+  const handleSaveStop = (stopData: { name: string; time: string }) => {
+    if (formMode === 'add') {
+      Alert.alert('Success', `New stop "${stopData.name}" added successfully!`);
+    } else {
+      Alert.alert('Success', `Stop "${stopData.name}" updated successfully!`);
+    }
+    setShowStopForm(false);
+    setSelectedStop(null);
+  };
+
+  const handleCancelStopForm = () => {
+    setShowStopForm(false);
+    setSelectedStop(null);
   };
 
   // Swipeable Stop Item Component
@@ -122,88 +166,90 @@ export default function TripDetails() {
     const animatedValue = getSwipeAnimation(stop.id);
     
     return (
-      <View style={styles.swipeContainer}>
-        {/* Delete Button Background */}
-        <View style={styles.deleteBackground}>
-          <TouchableOpacity 
-            style={styles.deleteButton}
-            onPress={() => handleDeleteStop(stop.id)}
+      <View style={styles.stopItemWrapper}>
+        <View style={styles.swipeContainer}>
+          {/* Delete Button Background */}
+          <View style={styles.deleteBackground}>
+            <TouchableOpacity 
+              style={styles.deleteButton}
+              onPress={() => handleDeleteStop(stop.id)}
+            >
+              <Ionicons name="trash" size={20} color="#FFFFFF" />
+              <Text style={styles.deleteText}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {/* Main Stop Item */}
+          <PanGestureHandler
+            onGestureEvent={(event) => handleSwipeGesture(stop.id, event)}
+            onHandlerStateChange={(event) => handleSwipeEnd(stop.id, event)}
+            activeOffsetX={[-10, 10]}
+            failOffsetY={[-5, 5]}
+            shouldCancelWhenOutside={true}
           >
-            <Ionicons name="trash" size={20} color="#FFFFFF" />
-            <Text style={styles.deleteText}>Delete</Text>
-          </TouchableOpacity>
-        </View>
-        
-        {/* Main Stop Item */}
-        <PanGestureHandler
-          onGestureEvent={(event) => handleSwipeGesture(stop.id, event)}
-          onHandlerStateChange={(event) => handleSwipeEnd(stop.id, event)}
-          activeOffsetX={[-10, 10]}
-          failOffsetY={[-5, 5]}
-          shouldCancelWhenOutside={true}
-        >
-          <Animated.View 
-            style={[
-              styles.stopItem,
-              {
-                transform: [{ translateX: animatedValue }]
-              }
-            ]}
-          >
-             <TouchableOpacity 
-               style={styles.stopItemContent}
-               onPress={() => handleStopPress(stop.id)}
-               activeOpacity={0.7}
-             >
-               <View style={styles.stopLeft}>
-                 <View style={[styles.stopIcon, { backgroundColor: getStopStatusColor(stop.status) }]}>
+            <Animated.View 
+              style={[
+                styles.stopItem,
+                {
+                  transform: [{ translateX: animatedValue }]
+                }
+              ]}
+            >
+               <TouchableOpacity 
+                 style={styles.stopItemContent}
+                 onPress={() => handleStopPress(stop.id)}
+                 activeOpacity={0.7}
+               >
+                 <View style={styles.stopLeft}>
+                   <View style={[styles.stopIcon, { backgroundColor: getStopStatusColor(stop.status) }]}>
+                     <Ionicons 
+                       name={getStopStatusIcon(stop.status)} 
+                       size={16} 
+                       color="#FFFFFF" 
+                     />
+                   </View>
+                   <View style={styles.stopDetails}>
+                     <Text style={styles.stopName}>{stop.name}</Text>
+                     <Text style={styles.stopTime}>{stop.time}</Text>
+                     {stop.passengers > 0 && (
+                       <Text style={styles.stopPassengers}>
+                         {stop.passengers} passengers boarded
+                       </Text>
+                     )}
+                   </View>
+                 </View>
+                 <View style={styles.stopRight}>
                    <Ionicons 
-                     name={getStopStatusIcon(stop.status)} 
-                     size={16} 
-                     color="#FFFFFF" 
+                     name={expandedStop === stop.id ? "chevron-up" : "chevron-down"} 
+                     size={20} 
+                     color="#6B7280" 
                    />
                  </View>
-                 <View style={styles.stopDetails}>
-                   <Text style={styles.stopName}>{stop.name}</Text>
-                   <Text style={styles.stopTime}>{stop.time}</Text>
-                   {stop.passengers > 0 && (
-                     <Text style={styles.stopPassengers}>
-                       {stop.passengers} passengers boarded
-                     </Text>
-                   )}
-                 </View>
-               </View>
-               <View style={styles.stopRight}>
-                 <Ionicons 
-                   name={expandedStop === stop.id ? "chevron-up" : "chevron-down"} 
-                   size={20} 
-                   color="#6B7280" 
-                 />
-               </View>
-             </TouchableOpacity>
-             
-             {/* Dropdown Menu */}
-             {expandedStop === stop.id && (
-               <View style={styles.dropdownMenu}>
-                 <TouchableOpacity 
-                   style={styles.dropdownItem}
-                   onPress={() => handleDropdownAction('Edit Stop', stop.id)}
-                 >
-                   <Ionicons name="create-outline" size={16} color="#9CA3AF" />
-                   <Text style={styles.dropdownText}>Edit Stop</Text>
-                 </TouchableOpacity>
-                 
-                 <TouchableOpacity 
-                   style={styles.dropdownItem}
-                   onPress={() => handleDropdownAction('Add Stop', stop.id)}
-                 >
-                   <Ionicons name="add-outline" size={16} color="#9CA3AF" />
-                   <Text style={styles.dropdownText}>Add Stop</Text>
-                 </TouchableOpacity>
-               </View>
-             )}
-          </Animated.View>
-        </PanGestureHandler>
+               </TouchableOpacity>
+            </Animated.View>
+          </PanGestureHandler>
+        </View>
+        
+        {/* Dropdown Menu - Outside swipeable area */}
+        {expandedStop === stop.id && (
+          <View style={styles.dropdownMenu}>
+            <TouchableOpacity 
+              style={styles.dropdownItem}
+              onPress={() => handleDropdownAction('Edit Stop', stop.id)}
+            >
+              <Ionicons name="create-outline" size={16} color="#9CA3AF" />
+              <Text style={styles.dropdownText}>Edit Stop</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.dropdownItem}
+              onPress={() => handleDropdownAction('Add Stop', stop.id)}
+            >
+              <Ionicons name="add-outline" size={16} color="#9CA3AF" />
+              <Text style={styles.dropdownText}>Add Stop</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     );
   };
@@ -284,7 +330,7 @@ export default function TripDetails() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollViewRef} style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Trip Overview Card */}
         <View style={styles.overviewCard}>
           <View style={styles.tripHeader}>
@@ -333,6 +379,16 @@ export default function TripDetails() {
         </View>
 
 
+
+        {/* Stop Form */}
+        {showStopForm && (
+          <StopForm
+            mode={formMode}
+            stop={selectedStop}
+            onSave={handleSaveStop}
+            onCancel={handleCancelStopForm}
+          />
+        )}
 
         {/* Bus Stops */}
         <View style={styles.section}>
@@ -394,6 +450,7 @@ const styles = StyleSheet.create({
   section: { marginBottom: 24 },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#1F2937', marginBottom: 16 },
   stopsCard: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
+  stopItemWrapper: { marginBottom: 0 },
   swipeContainer: { position: 'relative', overflow: 'hidden' },
   deleteBackground: { position: 'absolute', right: 0, top: 0, bottom: 0, width: 80, backgroundColor: '#EF4444', justifyContent: 'center', alignItems: 'center', zIndex: 1 },
   deleteButton: { justifyContent: 'center', alignItems: 'center', flex: 1, width: '100%' },
