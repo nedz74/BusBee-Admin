@@ -172,10 +172,10 @@ export default function BusDetails() {
                 <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
                   {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
                 </Text>
-                {item.type === 'trip' && (
-                  <Ionicons name="chevron-forward" size={16} color="#6B7280" style={styles.chevronIcon} />
-                )}
               </View>
+              {item.type === 'trip' && (
+                <Ionicons name="chevron-forward" size={16} color="#6B7280" style={styles.chevronIcon} />
+              )}
             </TouchableOpacity>
           ))}
         </View>
@@ -253,7 +253,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
-    elevation: 1
+    elevation: 1,
+    position: 'relative'
   },
   scheduleLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   scheduleIcon: { 
@@ -272,5 +273,9 @@ const styles = StyleSheet.create({
   scheduleRight: { alignItems: 'center' },
   statusDot: { width: 8, height: 8, borderRadius: 4, marginBottom: 4 },
   statusText: { fontSize: 11, fontWeight: '500', textTransform: 'uppercase' },
-  chevronIcon: { marginTop: 4 }
+  chevronIcon: { 
+    position: 'absolute',
+    bottom: 12,
+    right: 12
+  }
 });
