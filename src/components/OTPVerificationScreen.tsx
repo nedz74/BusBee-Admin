@@ -7,8 +7,10 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
+  Keyboard,
+  ScrollView,
+  Platform,
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { router } from 'expo-router';
 
 interface OTPVerificationScreenProps {
@@ -27,7 +29,10 @@ export default function OTPVerificationScreen({
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timeLeft, setTimeLeft] = useState(120); // 2 minutes in seconds
   const [isResendDisabled, setIsResendDisabled] = useState(true);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const inputRefs = useRef<TextInput[]>([]);
+  const [isFirstRender, setIsFirstRender] = useState(true);
 
   // Timer countdown
   useEffect(() => {
@@ -40,6 +45,32 @@ export default function OTPVerificationScreen({
       setIsResendDisabled(false);
     }
   }, [timeLeft]);
+
+  // Keyboard event listeners
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+        setIsKeyboardVisible(true);
+        setIsFirstRender(false);
+      }
+    );
+
+    const keyboardDidHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+        setIsKeyboardVisible(false);
+        setIsFirstRender(false);
+      }
+    );
+
+    return () => {
+      keyboardDidShowListener?.remove();
+      keyboardDidHideListener?.remove();
+    };
+  }, []);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -103,21 +134,23 @@ export default function OTPVerificationScreen({
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
-      <KeyboardAwareScrollView
+      <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          isKeyboardVisible && { paddingBottom: keyboardHeight + 35 }
+        ]}
         keyboardShouldPersistTaps="handled"
-        enableOnAndroid={true}
-        extraScrollHeight={90}
         showsVerticalScrollIndicator={false}
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
       >
         <View style={styles.content}>
           {/* Header */}
-          <View style={styles.header}>
+          {/* <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
               <Text style={styles.backButtonText}>←</Text>
             </TouchableOpacity>
-          </View>
+          </View> */}
 
           {/* Main Content */}
           <View style={styles.mainContent}>
@@ -172,7 +205,7 @@ export default function OTPVerificationScreen({
           {/* Continue Button */}
           <View style={styles.bottomContainer}>
             <TouchableOpacity
-              style={[styles.continueButton, !isOtpComplete && styles.continueButtonDisabled]}
+              style={[styles.continueButton, !isOtpComplete && styles.continueButtonDisabled, { marginBottom: isFirstRender ? 310 : (isKeyboardVisible ? 20 : 20) }]}
               onPress={handleVerify}
               disabled={!isOtpComplete}
             >
@@ -180,7 +213,7 @@ export default function OTPVerificationScreen({
             </TouchableOpacity>
           </View>
         </View>
-      </KeyboardAwareScrollView>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -199,7 +232,7 @@ const styles = StyleSheet.create({
   header: { paddingTop: 10, paddingBottom: 20 },
   backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#f5f5f5', justifyContent: 'center', alignItems: 'center' },
   backButtonText: { fontSize: 18, color: '#333', fontFamily: 'Arquitecta' },
-  mainContent: { flex: 1, paddingTop: 20 },
+  mainContent: { flex: 1, paddingTop: 35 },
   title: { fontSize: 28, fontFamily: 'ArquitectaBold', color: '#333', marginBottom: 16, lineHeight: 34 },
   subtitle: { fontSize: 16, fontFamily: 'Arquitecta', color: '#666', marginBottom: 40, lineHeight: 22 },
   editLink: { color: '#8B5CF6', fontFamily: 'ArquitectaMedium' },
@@ -209,8 +242,8 @@ const styles = StyleSheet.create({
   resendText: { fontSize: 14, fontFamily: 'Arquitecta', color: '#999' },
   timerText: { color: '#333', fontFamily: 'ArquitectaBold' },
   resendButton: { fontSize: 14, fontFamily: 'ArquitectaMedium', color: '#8B5CF6', marginTop: 5 },
-  bottomContainer: { marginTop: 'auto', marginBottom: 20 },
-  continueButton: { backgroundColor: '#D81030', paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
+  bottomContainer: { marginTop: 'auto' },
+  continueButton: { backgroundColor: '#D81030', paddingVertical: 10, borderRadius: 8, alignItems: 'center'},
   continueButtonDisabled: { backgroundColor: '#ccc' },
   continueButtonText: { color: '#ffffff', fontSize: 18, fontFamily: 'ArquitectaBold' },
 });
