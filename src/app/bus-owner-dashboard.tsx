@@ -1,7 +1,27 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Modal } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Modal, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import apiService from '../services/api';
+
+// DRY: Menu items configuration
+const MENU_ITEMS = [
+  { id: 'my-buses', title: 'My Buses', icon: 'bus', route: '/sideNavScreens/my-buses' },
+  { id: 'schedule', title: 'Schedule', icon: 'calendar', route: '/sideNavScreens/schedule' },
+  { id: 'passengers', title: 'Passengers', icon: 'people', route: '/sideNavScreens/passengers' },
+  { id: 'payments', title: 'Payments', icon: 'card', route: '/sideNavScreens/payments' },
+  { id: 'reports', title: 'Reports', icon: 'analytics', route: '/sideNavScreens/reports' },
+  { id: 'settings', title: 'Settings', icon: 'settings', route: '/sideNavScreens/settings' },
+  { id: 'help', title: 'Help & Support', icon: 'help-circle', route: '/sideNavScreens/help-support' },
+] as const;
+
+// DRY: Bus data configuration
+const BUS_DATA = [
+  { id: 'KB-01', route: 'Kochi → Bangalore', status: 'active', passengers: 45, revenue: '₹12,500' },
+  { id: 'KB-02', route: 'Kochi → Chennai', status: 'maintenance', passengers: 0, revenue: '₹0' },
+  { id: 'KB-03', route: 'Bangalore → Kochi', status: 'active', passengers: 38, revenue: '₹9,800' },
+] as const;
 
 export default function Dashboard() {
   const [isSideNavOpen, setIsSideNavOpen] = useState(false);
@@ -14,51 +34,76 @@ export default function Dashboard() {
     setIsSideNavOpen(false);
   };
 
-  const navigateToMyBuses = () => {
-    closeSideNav();
-    router.push('/sideNavScreens/my-buses');
-  };
-
-  const navigateToSchedule = () => {
-    closeSideNav();
-    router.push('/sideNavScreens/schedule');
-  };
-
-  const navigateToPassengers = () => {
-    closeSideNav();
-    router.push('/sideNavScreens/passengers');
-  };
-
-  const navigateToPayments = () => {
-    closeSideNav();
-    router.push('/sideNavScreens/payments');
-  };
-
-  const navigateToReports = () => {
-    closeSideNav();
-    router.push('/sideNavScreens/reports');
-  };
-
-  const navigateToSettings = () => {
-    closeSideNav();
-    router.push('/sideNavScreens/settings');
-  };
-
-  const navigateToHelpSupport = () => {
-    closeSideNav();
-    router.push('/sideNavScreens/help-support');
-  };
-
-  const navigateToRevenueDetails = () => {
-    router.push('/sideNavScreens/revenue-details');
+  // DRY: Generic navigation handler
+  const navigateToScreen = (route: string, closeNav = true) => {
+    if (closeNav) closeSideNav();
+    router.push(route);
   };
 
   const navigateToBusDetails = (busId: string) => {
-    router.push(`/sideNavScreens/bus-details/${busId}`);
+    navigateToScreen(`/sideNavScreens/bus-details/${busId}`, false);
+  };
+
+  // DRY: Reusable components
+  const renderMenuItem = (item: (typeof MENU_ITEMS)[number]) => (
+    <TouchableOpacity
+      key={item.id}
+      style={styles.sideNavItem}
+      onPress={() => navigateToScreen(item.route)}
+    >
+      <Ionicons name={item.icon as any} size={20} color="#6B46C1" />
+      <Text style={styles.sideNavItemText}>{item.title}</Text>
+    </TouchableOpacity>
+  );
+
+  const renderBusCard = (bus: (typeof BUS_DATA)[number]) => (
+    <TouchableOpacity
+      key={bus.id}
+      style={styles.tripItem}
+      onPress={() => navigateToBusDetails(bus.id)}
+      activeOpacity={0.7}
+    >
+      <View style={styles.tripIcon}>
+        <Ionicons name="bus" size={20} color="#FFFFFF" />
+      </View>
+      <View style={styles.tripDetails}>
+        <Text style={styles.tripBusName}>Bus {bus.id}</Text>
+        <Text style={styles.tripRoute}>{bus.route}</Text>
+      </View>
+      <View style={styles.tripStatus}>
+        <View style={[
+          styles.statusIndicator,
+          { backgroundColor: bus.status === 'active' ? '#10B981' : '#EF4444' }
+        ]} />
+        <Text style={styles.tripStatusText}>{bus.status}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  const handleLogout = async () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Logout", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await apiService.logout();
+              router.replace('/(auth)');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          }
+        }
+      ]
+    );
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#6B46C1" />
       
       {/* Header */}
@@ -79,7 +124,7 @@ export default function Dashboard() {
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Revenue Live Update Card */}
-        <TouchableOpacity style={styles.revenueCard} onPress={navigateToRevenueDetails}>
+        <TouchableOpacity style={styles.revenueCard} onPress={() => navigateToScreen('/sideNavScreens/revenue-details', false)}>
           <Text style={styles.cardTitle}>Revenue Live Update</Text>
           <Text style={styles.revenueAmount}>₹12,350</Text>
           <Text style={styles.revenueSubtitle}>Total Revenue Today</Text>
@@ -99,45 +144,7 @@ export default function Dashboard() {
             </TouchableOpacity>
           </View>
           <View style={styles.tripCard}>
-            <TouchableOpacity style={styles.tripItem} onPress={() => navigateToBusDetails('KB-01')} activeOpacity={0.7}>
-              <View style={styles.tripIcon}>
-                <Ionicons name="bus" size={20} color="#FFFFFF" />
-              </View>
-              <View style={styles.tripDetails}>
-                <Text style={styles.tripBusName}>Bus KB-01</Text>
-                <Text style={styles.tripRoute}>North Paravur – High Court</Text>
-              </View>
-              <View style={styles.tripStatus}>
-                <View style={[styles.statusIndicator, { backgroundColor: '#10B981' }]} />
-                <Text style={styles.tripStatusText}>Active</Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.tripItem} onPress={() => navigateToBusDetails('KB-02')} activeOpacity={0.7}>
-              <View style={styles.tripIcon}>
-                <Ionicons name="bus" size={20} color="#FFFFFF" />
-              </View>
-              <View style={styles.tripDetails}>
-                <Text style={styles.tripBusName}>Bus KB-02</Text>
-                <Text style={styles.tripRoute}>High Court – Kakkanad</Text>
-              </View>
-              <View style={styles.tripStatus}>
-                <View style={[styles.statusIndicator, { backgroundColor: '#10B981' }]} />
-                <Text style={styles.tripStatusText}>Active</Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.tripItem} onPress={() => navigateToBusDetails('KB-03')} activeOpacity={0.7}>
-              <View style={styles.tripIcon}>
-                <Ionicons name="bus" size={20} color="#FFFFFF" />
-              </View>
-              <View style={styles.tripDetails}>
-                <Text style={styles.tripBusName}>Bus KB-03</Text>
-                <Text style={styles.tripRoute}>Cheranallor – Edappally</Text>
-              </View>
-              <View style={styles.tripStatus}>
-                <View style={[styles.statusIndicator, { backgroundColor: '#EF4444' }]} />
-                <Text style={styles.tripStatusText}>Inactive</Text>
-              </View>
-            </TouchableOpacity>
+            {BUS_DATA.map(renderBusCard)}
           </View>
         </View>
 
@@ -191,42 +198,9 @@ export default function Dashboard() {
                 <Text style={styles.sideNavItemText}>Dashboard</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity style={styles.sideNavItem} onPress={navigateToMyBuses}>
-                <Ionicons name="bus" size={20} color="#6B46C1" />
-                <Text style={styles.sideNavItemText}>My Buses</Text>
-              </TouchableOpacity>
+              {MENU_ITEMS.map(renderMenuItem)}
               
-              <TouchableOpacity style={styles.sideNavItem} onPress={navigateToSchedule}>
-                <Ionicons name="calendar" size={20} color="#6B46C1" />
-                <Text style={styles.sideNavItemText}>Schedule</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.sideNavItem} onPress={navigateToPassengers}>
-                <Ionicons name="people" size={20} color="#6B46C1" />
-                <Text style={styles.sideNavItemText}>Passengers</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.sideNavItem} onPress={navigateToPayments}>
-                <Ionicons name="card" size={20} color="#6B46C1" />
-                <Text style={styles.sideNavItemText}>Payments</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.sideNavItem} onPress={navigateToReports}>
-                <Ionicons name="analytics" size={20} color="#6B46C1" />
-                <Text style={styles.sideNavItemText}>Reports</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.sideNavItem} onPress={navigateToSettings}>
-                <Ionicons name="settings" size={20} color="#6B46C1" />
-                <Text style={styles.sideNavItemText}>Settings</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.sideNavItem} onPress={navigateToHelpSupport}>
-                <Ionicons name="help-circle" size={20} color="#6B46C1" />
-                <Text style={styles.sideNavItemText}>Help & Support</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={[styles.sideNavItem, styles.logoutItem]}>
+              <TouchableOpacity style={[styles.sideNavItem, styles.logoutItem]} onPress={handleLogout}>
                 <Ionicons name="log-out" size={20} color="#EF4444" />
                 <Text style={[styles.sideNavItemText, styles.logoutText]}>Logout</Text>
               </TouchableOpacity>
@@ -234,7 +208,7 @@ export default function Dashboard() {
       </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 

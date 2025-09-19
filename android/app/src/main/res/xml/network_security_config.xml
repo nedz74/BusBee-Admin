@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- DEVELOPMENT ONLY: Allow HTTP for local development -->
+    <!-- WARNING: This allows HTTP to ALL domains - NEVER use in production -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </base-config>
+</network-security-config>
