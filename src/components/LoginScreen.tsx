@@ -5,13 +5,16 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   ScrollView,
   Keyboard,
   Platform,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import apiService from "../services/api";
 
 type LoginMode = "user" | "bus-owner";
 
@@ -20,6 +23,7 @@ export default function LoginScreen({ mode = "user" }: { mode?: LoginMode }) {
   const [phoneError, setPhoneError] = useState("");
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
@@ -37,6 +41,7 @@ export default function LoginScreen({ mode = "user" }: { mode?: LoginMode }) {
         setIsKeyboardVisible(false);
       }
     );
+
 
     return () => {
       keyboardDidShowListener?.remove();
@@ -79,7 +84,7 @@ export default function LoginScreen({ mode = "user" }: { mode?: LoginMode }) {
     }
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     const error = validatePhoneNumber(phoneNumber);
 
     if (error) {
@@ -87,12 +92,41 @@ export default function LoginScreen({ mode = "user" }: { mode?: LoginMode }) {
       return;
     }
 
-    // TODO: add your login validation / API call here
-    // Navigate to OTP verification page with phone number
-    router.push({
-      pathname: "/otp-verification",
-      params: { phoneNumber: phoneNumber },
-    });
+    setIsLoading(true);
+    
+    try {
+      // Send OTP via API
+      const userType = mode === "bus-owner" ? "bus_owner" : "user";
+      const response = await apiService.sendOTP(phoneNumber, userType);
+
+      if (response.success) {
+        // Navigate to OTP verification page with phone number
+        router.push({
+          pathname: "/otp-verification",
+          params: { 
+            phoneNumber: phoneNumber,
+            userType: userType
+          },
+        });
+      } else {
+        setPhoneError(response.message || "Failed to send OTP. Please try again.");
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Network error. Please check your connection.";
+      
+      Alert.alert(
+        "Connection Error",
+        errorMessage,
+        [
+          {
+            text: "OK",
+            onPress: () => setPhoneError("Please check your internet connection and try again.")
+          }
+        ]
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleBusOwnerLogin = () => {
@@ -107,7 +141,7 @@ export default function LoginScreen({ mode = "user" }: { mode?: LoginMode }) {
         style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
-          isKeyboardVisible && { paddingBottom: keyboardHeight + 35 }
+          isKeyboardVisible && { paddingBottom: keyboardHeight }
         ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -164,10 +198,15 @@ export default function LoginScreen({ mode = "user" }: { mode?: LoginMode }) {
           </View>
 
           <TouchableOpacity
-            style={styles.continueButton}
+            style={[styles.continueButton, isLoading && styles.continueButtonDisabled]}
             onPress={handleContinue}
+            disabled={isLoading}
           >
-            <Text style={styles.continueButtonText}>Continue</Text>
+            {isLoading ? (
+              <ActivityIndicator color="#ffffff" size="small" />
+            ) : (
+              <Text style={styles.continueButtonText}>Continue</Text>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -176,9 +215,10 @@ export default function LoginScreen({ mode = "user" }: { mode?: LoginMode }) {
 }
 
 const styles = StyleSheet.create({
+  redBorder: { borderWidth: 1, borderColor: "#D81030" },
   container: { flex: 1, backgroundColor: "#ffffff" },
   scrollView: { flex: 1 },
-  scrollContent: { flexGrow: 1, justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 40, paddingBottom: 40 },
+  scrollContent: { flexGrow: 1, justifyContent: "space-between", paddingHorizontal: 20 },
   topContent: { marginTop: 30 },
   bottomContent: { marginTop: "auto" },
   content: { flex: 1, paddingHorizontal: 20, paddingTop: 40, justifyContent: "space-between", minHeight: "100%" },
@@ -195,7 +235,8 @@ const styles = StyleSheet.create({
   termsContainer: { alignItems: "center", marginBottom: 10 },
   termsText: { fontSize: 14, fontFamily: "Arquitecta", color: "#666", textAlign: "center", lineHeight: 20 },
   termsLink: { color: "#8B5CF6", textDecorationLine: "underline", fontFamily: "ArquitectaMedium" },
-  continueButton: { backgroundColor: "#D81030", paddingVertical: 10, borderRadius: 8, alignItems: "center", marginBottom: 20 },
+  continueButton: { backgroundColor: "#D81030", paddingVertical: 10, borderRadius: 8, alignItems: "center", marginBottom: 10 },
+  continueButtonDisabled: { backgroundColor: "#ccc" },
   continueButtonText: { color: "#ffffff", fontSize: 18, fontFamily: "ArquitectaBold" },
 });
 

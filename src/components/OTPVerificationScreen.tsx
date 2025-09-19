@@ -5,12 +5,13 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   Keyboard,
   ScrollView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 interface OTPVerificationScreenProps {
@@ -18,6 +19,8 @@ interface OTPVerificationScreenProps {
   onVerify?: (otp: string) => void;
   onEditPhone?: () => void;
   onResendOTP?: () => void;
+  isVerifying?: boolean;
+  isResending?: boolean;
 }
 
 export default function OTPVerificationScreen({
@@ -25,6 +28,8 @@ export default function OTPVerificationScreen({
   onVerify,
   onEditPhone,
   onResendOTP,
+  isVerifying = false,
+  isResending = false,
 }: OTPVerificationScreenProps) {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timeLeft, setTimeLeft] = useState(120); // 2 minutes in seconds
@@ -98,20 +103,13 @@ export default function OTPVerificationScreen({
 
   const handleVerify = () => {
     const otpString = otp.join('');
-    if (otpString.length === 6) {
-      if (onVerify) {
-        onVerify(otpString);
-        router.replace('/dashboard');
-
-      } else {
-        // Default behavior - navigate to dashboard
-        router.replace('/dashboard');
-      }
+    if (otpString.length === 6 && !isVerifying && onVerify) {
+      onVerify(otpString);
     }
   };
 
   const handleResendOTP = () => {
-    if (!isResendDisabled) {
+    if (!isResendDisabled && !isResending) {
       setTimeLeft(120);
       setIsResendDisabled(true);
       if (onResendOTP) {
@@ -121,11 +119,7 @@ export default function OTPVerificationScreen({
   };
 
   const handleEditPhone = () => {
-    if (onEditPhone) {
-      onEditPhone();
-    } else {
-      router.back();
-    }
+    onEditPhone?.();
   };
 
   const isOtpComplete = otp.every(digit => digit !== '');
@@ -138,7 +132,7 @@ export default function OTPVerificationScreen({
         style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
-          isKeyboardVisible && { paddingBottom: keyboardHeight + 35 }
+          isKeyboardVisible && { paddingBottom: keyboardHeight }
         ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -195,21 +189,33 @@ export default function OTPVerificationScreen({
                 </Text>
               </Text>
               {!isResendDisabled && (
-                <TouchableOpacity onPress={handleResendOTP}>
-                  <Text style={styles.resendButton}>Resend OTP</Text>
+                <TouchableOpacity onPress={handleResendOTP} disabled={isResending}>
+                  {isResending ? (
+                    <ActivityIndicator size="small" color="#8B5CF6" />
+                  ) : (
+                    <Text style={styles.resendButton}>Resend OTP</Text>
+                  )}
                 </TouchableOpacity>
               )}
             </View>
           </View>
 
           {/* Continue Button */}
-          <View style={styles.bottomContainer}>
+          <View >
             <TouchableOpacity
-              style={[styles.continueButton, !isOtpComplete && styles.continueButtonDisabled, { marginBottom: isFirstRender ? 310 : (isKeyboardVisible ? 20 : 20) }]}
+              style={[
+                styles.continueButton, 
+                (!isOtpComplete || isVerifying) && styles.continueButtonDisabled, 
+                { marginBottom: isFirstRender ? 304 : (isKeyboardVisible ? 10 : 10) }
+              ]}
               onPress={handleVerify}
-              disabled={!isOtpComplete}
+              disabled={!isOtpComplete || isVerifying}
             >
-              <Text style={styles.continueButtonText}>Continue</Text>
+              {isVerifying ? (
+                <ActivityIndicator color="#ffffff" size="small" />
+              ) : (
+                <Text style={styles.continueButtonText}>Continue</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -220,13 +226,12 @@ export default function OTPVerificationScreen({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#ffffff' },
+  redBorder: { borderWidth: 1, borderColor: '#D81030' },
   scrollView: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 40,
-    paddingBottom: 40,
   },
   content: { flex: 1 },
   header: { paddingTop: 10, paddingBottom: 20 },
@@ -242,7 +247,6 @@ const styles = StyleSheet.create({
   resendText: { fontSize: 14, fontFamily: 'Arquitecta', color: '#999' },
   timerText: { color: '#333', fontFamily: 'ArquitectaBold' },
   resendButton: { fontSize: 14, fontFamily: 'ArquitectaMedium', color: '#8B5CF6', marginTop: 5 },
-  bottomContainer: { marginTop: 'auto' },
   continueButton: { backgroundColor: '#D81030', paddingVertical: 10, borderRadius: 8, alignItems: 'center'},
   continueButtonDisabled: { backgroundColor: '#ccc' },
   continueButtonText: { color: '#ffffff', fontSize: 18, fontFamily: 'ArquitectaBold' },
