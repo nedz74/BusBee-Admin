@@ -296,14 +296,16 @@ class ApiService {
       method: 'POST',
     }); // Uses JWT auth automatically
 
-    // Clear local storage
+    // Clear ALL local storage (complete cleanup)
     await this.removeTokens();
+    await AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA);
+    await AsyncStorage.removeItem(STORAGE_KEYS.USER_TYPE);
 
     return response;
   }
 
   // Utility Methods
-
+  
   // Check if user is logged in
   async isLoggedIn(): Promise<boolean> {
     try {
