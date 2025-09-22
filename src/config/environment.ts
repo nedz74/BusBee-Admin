@@ -22,7 +22,7 @@ const getEnvironment = (): Environment['name'] => {
 const environments: Record<Environment['name'], Environment> = {
   development: {
     name: 'development',
-    apiBaseUrl: __DEV__ ? 'http://192.168.1.34:3001' : 'http://localhost:3001',
+    apiBaseUrl: __DEV__ ? 'http://192.168.29.226:3001' : 'http://localhost:3001',
     apiTimeout: 10000, // 10 seconds for development
   },
   

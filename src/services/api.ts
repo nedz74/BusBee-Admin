@@ -290,6 +290,19 @@ class ApiService {
     });
   }
 
+  // Save bus owner details
+  async saveBusOwnerDetails(details: {
+    busOwnerName: string;
+    busName: string;
+    busNumber: string;
+    rcBookNumber: string;
+  }): Promise<ApiResponse> {
+    return this.makeRequest('/api/bus-owner/details', {
+      method: 'POST',
+      body: JSON.stringify(details),
+    });
+  }
+
   // Logout user
   async logout(): Promise<ApiResponse> {
     const response = await this.makeRequest('/api/auth/logout', {
