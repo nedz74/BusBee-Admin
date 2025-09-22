@@ -101,7 +101,7 @@ export default function PassengersScreen() {
                   <Text style={styles.detailText}>{passenger.route}</Text>
                 </View>
                 <View style={styles.detailRow}>
-                  <Ionicons name="seat" size={16} color="#6B46C1" />
+                  <Ionicons name="person" size={16} color="#6B46C1" />
                   <Text style={styles.detailText}>Seat: {passenger.seat}</Text>
                 </View>
                 <View style={styles.detailRow}>

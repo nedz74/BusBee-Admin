@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,8 +23,44 @@ const BUS_DATA = [
   { id: 'KB-03', route: 'Bangalore → Kochi', status: 'active', passengers: 38, revenue: '₹9,800' },
 ] as const;
 
+interface BusOwnerDetails {
+  busOwnerName: string;
+  busName: string;
+  busNumber: string;
+  rcBookNumber: string;
+  hasCompletedOnboarding: boolean;
+}
+
 export default function Dashboard() {
   const [isSideNavOpen, setIsSideNavOpen] = useState(false);
+  const [busOwnerDetails, setBusOwnerDetails] = useState<BusOwnerDetails | null>(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(true);
+
+  // Load bus owner details on component mount
+  useEffect(() => {
+    const loadBusOwnerDetails = async () => {
+      try {
+        const response = await apiService.getCurrentUser();
+        
+        if (response.success && response.data?.user?.profile) {
+          const profile = response.data.user.profile;
+          setBusOwnerDetails({
+            busOwnerName: profile.bus_owner_name || '',
+            busName: profile.bus_name || '',
+            busNumber: profile.bus_number || '',
+            rcBookNumber: profile.rc_book_number || '',
+            hasCompletedOnboarding: profile.has_completed_onboarding || false,
+          });
+        }
+      } catch (error) {
+        console.error('Error loading bus owner details:', error);
+      } finally {
+        setIsLoadingDetails(false);
+      }
+    };
+
+    loadBusOwnerDetails();
+  }, []);
 
   const toggleSideNav = () => {
     setIsSideNavOpen(!isSideNavOpen);
@@ -109,7 +145,9 @@ export default function Dashboard() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.greeting}>Hello, Bus Owner!</Text>
+          <Text style={styles.greeting}>
+            Hi, {isLoadingDetails ? 'Loading...' : (busOwnerDetails?.busOwnerName || 'Owner')}!
+          </Text>
         </View>
         <View style={styles.headerIcons}>
           <TouchableOpacity style={styles.iconButton}>
@@ -134,6 +172,33 @@ export default function Dashboard() {
           </View>
         </TouchableOpacity>
 
+        {/* Bus Owner Details */}
+        {busOwnerDetails && (
+          <View style={styles.busOwnerCard}>
+            <View style={styles.busOwnerHeader}>
+              <Ionicons name="person-circle" size={24} color="#6B46C1" />
+              <Text style={styles.busOwnerTitle}>Your Details</Text>
+            </View>
+            <View style={styles.busOwnerInfo}>
+              <View style={styles.busOwnerRow}>
+                <Text style={styles.busOwnerLabel}>Owner Name:</Text>
+                <Text style={styles.busOwnerValue}>{busOwnerDetails.busOwnerName}</Text>
+              </View>
+              <View style={styles.busOwnerRow}>
+                <Text style={styles.busOwnerLabel}>Bus Name:</Text>
+                <Text style={styles.busOwnerValue}>{busOwnerDetails.busName}</Text>
+              </View>
+              <View style={styles.busOwnerRow}>
+                <Text style={styles.busOwnerLabel}>Bus Number:</Text>
+                <Text style={styles.busOwnerValue}>{busOwnerDetails.busNumber}</Text>
+              </View>
+              <View style={styles.busOwnerRow}>
+                <Text style={styles.busOwnerLabel}>RC Book:</Text>
+                <Text style={styles.busOwnerValue}>{busOwnerDetails.rcBookNumber}</Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* Today's Trips */}
         <View style={styles.section}>
@@ -186,7 +251,12 @@ export default function Dashboard() {
           </View>
           <View style={styles.sideNav}>
             <View style={styles.sideNavHeader}>
-              <Text style={styles.sideNavTitle}>Menu</Text>
+              <View>
+                <Text style={styles.sideNavTitle}>Menu</Text>
+                {busOwnerDetails?.busOwnerName && (
+                  <Text style={styles.sideNavSubtitle}>{busOwnerDetails.busOwnerName}</Text>
+                )}
+              </View>
               <TouchableOpacity onPress={closeSideNav} style={styles.closeButton}>
                 <Ionicons name="close" size={24} color="#FFFFFF" />
               </TouchableOpacity>
@@ -251,10 +321,19 @@ const styles = StyleSheet.create({
   sideNav: { width: 300, height: '100%', backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOffset: { width: -2, height: 0 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 8 },
   sideNavHeader: { backgroundColor: '#6B46C1', paddingTop: 50, paddingBottom: 20, paddingHorizontal: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sideNavTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFFFFF' },
+  sideNavSubtitle: { fontSize: 14, color: '#E0E7FF', marginTop: 2, fontFamily: 'Arquitecta' },
   closeButton: { padding: 5 },
   sideNavContent: { flex: 1, paddingTop: 20 },
   sideNavItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
   sideNavItemText: { fontSize: 16, color: '#374151', marginLeft: 15, fontWeight: '500' },
   logoutItem: { marginTop: 20, borderTopWidth: 1, borderTopColor: '#E5E7EB' },
   logoutText: { color: '#EF4444' },
+  // Bus Owner Details Styles
+  busOwnerCard: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
+  busOwnerHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  busOwnerTitle: { fontSize: 18, fontWeight: 'bold', color: '#374151', marginLeft: 8, fontFamily: 'ArquitectaBold' },
+  busOwnerInfo: { gap: 8 },
+  busOwnerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
+  busOwnerLabel: { fontSize: 14, color: '#6B7280', fontWeight: '500', fontFamily: 'ArquitectaMedium' },
+  busOwnerValue: { fontSize: 14, color: '#374151', fontWeight: '600', fontFamily: 'ArquitectaBold' },
 });

@@ -77,15 +77,24 @@ export default function RootLayout() {
             }} 
           />
           <Stack.Screen 
+            name="bus-owner-onboarding" 
+            options={{ 
+              headerShown: false,
+              animation: 'none',
+            }} 
+          />
+          <Stack.Screen 
             name="bus-owner-dashboard" 
             options={{ 
               headerShown: false,
+              animation:"none"
             }} 
           />
           <Stack.Screen 
             name="user-dashboard" 
             options={{ 
               headerShown: false,
+              animation:"none"
             }} 
           />
           <Stack.Screen 

@@ -66,7 +66,12 @@ export default function OTPVerificationPage() {
     
     // Navigate to appropriate dashboard based on actual user type
     if (actualUserType === 'bus_owner') {
-      router.replace('/bus-owner-dashboard');
+      // Check if bus owner needs onboarding (first time login)
+      if (userData?.isNewUser || !userData?.hasCompletedOnboarding) {
+        router.replace('/bus-owner-onboarding');
+      } else {
+        router.replace('/bus-owner-dashboard');
+      }
     } else {
       router.replace('/user-dashboard');
     }
