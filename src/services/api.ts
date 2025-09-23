@@ -303,6 +303,13 @@ class ApiService {
     });
   }
 
+  // Mark verification modal as seen
+  async markVerificationModalSeen(): Promise<ApiResponse> {
+    return this.makeRequest('/api/bus-owner/mark-verification-modal-seen', {
+      method: 'POST',
+    });
+  }
+
   // Logout user
   async logout(): Promise<ApiResponse> {
     const response = await this.makeRequest('/api/auth/logout', {

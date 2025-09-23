@@ -35,6 +35,7 @@ export default function Dashboard() {
   const [isSideNavOpen, setIsSideNavOpen] = useState(false);
   const [busOwnerDetails, setBusOwnerDetails] = useState<BusOwnerDetails | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(true);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
 
   // Load bus owner details on component mount
   useEffect(() => {
@@ -44,13 +45,25 @@ export default function Dashboard() {
         
         if (response.success && response.data?.user?.profile) {
           const profile = response.data.user.profile;
+          const hasCompletedOnboarding = profile.has_completed_onboarding || false;
+          
           setBusOwnerDetails({
             busOwnerName: profile.bus_owner_name || '',
             busName: profile.bus_name || '',
             busNumber: profile.bus_number || '',
             rcBookNumber: profile.rc_book_number || '',
-            hasCompletedOnboarding: profile.has_completed_onboarding || false,
+            hasCompletedOnboarding,
           });
+
+          // Show verification modal only if user completed onboarding AND hasn't seen the modal before
+          if (hasCompletedOnboarding && 
+              profile.bus_owner_name && 
+              profile.bus_name && 
+              profile.bus_number && 
+              profile.rc_book_number && 
+              !profile.has_seen_verification_modal) {
+            setShowVerificationModal(true);
+          }
         }
       } catch (error) {
         console.error('Error loading bus owner details:', error);
@@ -68,6 +81,16 @@ export default function Dashboard() {
 
   const closeSideNav = () => {
     setIsSideNavOpen(false);
+  };
+
+  const handleCloseVerificationModal = async () => {
+    // Mark that the verification modal has been seen on the server
+    try {
+      await apiService.markVerificationModalSeen();
+    } catch (error) {
+      console.error('Error marking verification modal as seen:', error);
+    }
+    setShowVerificationModal(false);
   };
 
   // DRY: Generic navigation handler
@@ -278,6 +301,45 @@ export default function Dashboard() {
       </View>
         </View>
       </Modal>
+
+      {/* Verification Modal */}
+      <Modal
+        visible={showVerificationModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowVerificationModal(false)}
+      >
+        <View style={styles.verificationModalOverlay}>
+          <View style={styles.verificationModalContainer}>
+            <View style={styles.verificationModalContent}>
+              {/* Success Icon */}
+              <View style={styles.verificationIconContainer}>
+                <Ionicons name="checkmark-circle" size={60} color="#10B981" />
+              </View>
+              
+              {/* Title */}
+              <Text style={styles.verificationTitle}>Information Submitted Successfully!</Text>
+              
+              {/* Message */}
+              <Text style={styles.verificationMessage}>
+                Thank you for completing your profile setup. Your provided information has been submitted for verification to the relevant authorities.
+              </Text>
+              
+              <Text style={styles.verificationSubMessage}>
+                You will be notified once the verification process is complete. In the meantime, you can explore the dashboard and manage your bus operations.
+              </Text>
+              
+              {/* Close Button */}
+              <TouchableOpacity
+                style={styles.verificationCloseButton}
+                onPress={handleCloseVerificationModal}
+              >
+                <Text style={styles.verificationCloseButtonText}>Got it, thanks!</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -336,4 +398,14 @@ const styles = StyleSheet.create({
   busOwnerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
   busOwnerLabel: { fontSize: 14, color: '#6B7280', fontWeight: '500', fontFamily: 'ArquitectaMedium' },
   busOwnerValue: { fontSize: 14, color: '#374151', fontWeight: '600', fontFamily: 'ArquitectaBold' },
+  // Verification Modal Styles
+  verificationModalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  verificationModalContainer: { backgroundColor: '#FFFFFF', borderRadius: 20, width: '100%', maxWidth: 400, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 20, elevation: 10 },
+  verificationModalContent: { padding: 30, alignItems: 'center' },
+  verificationIconContainer: { marginBottom: 20 },
+  verificationTitle: { fontSize: 22, fontWeight: 'bold', color: '#1F2937', textAlign: 'center', marginBottom: 16, fontFamily: 'ArquitectaBold' },
+  verificationMessage: { fontSize: 16, color: '#374151', textAlign: 'center', lineHeight: 24, marginBottom: 12, fontFamily: 'Arquitecta' },
+  verificationSubMessage: { fontSize: 14, color: '#6B7280', textAlign: 'center', lineHeight: 20, marginBottom: 24, fontFamily: 'Arquitecta' },
+  verificationCloseButton: { backgroundColor: '#6B46C1', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 32, minWidth: 160 },
+  verificationCloseButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600', textAlign: 'center', fontFamily: 'ArquitectaBold' },
 });
