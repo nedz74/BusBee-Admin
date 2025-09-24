@@ -61,16 +61,16 @@ export default function UserDashboard() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.greeting}>Hello, {userData?.name || 'User'}! 👋</Text>
-          <Text style={styles.subGreeting}>Welcome to BusBee</Text>
-        </View>
-        <View style={styles.headerIcons}>
           <TouchableOpacity style={styles.iconButton}>
             <Ionicons name="notifications" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <TouchableOpacity onPress={handleLogout} style={styles.iconButton}>
             <Ionicons name="log-out" size={24} color="#FFFFFF" />
           </TouchableOpacity>
+        </View>
+        <View style={styles.headerRight}>
+          <Text style={styles.greeting}>Hello, {userData?.name || 'User'}! 👋</Text>
+          <Text style={styles.subGreeting}>Welcome to BusBee</Text>
         </View>
       </View>
 
@@ -175,11 +175,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between', 
     alignItems: 'center' 
   },
-  headerLeft: { flex: 1 },
+  headerLeft: { flexDirection: 'row', alignItems: 'center' },
+  headerRight: { flex: 1, alignItems: 'flex-end' },
   greeting: { fontSize: 24, fontWeight: 'bold', color: '#FFFFFF', marginBottom: 4 },
   subGreeting: { fontSize: 14, color: '#E0E7FF' },
   headerIcons: { flexDirection: 'row', alignItems: 'center' },
-  iconButton: { marginLeft: 15, padding: 8 },
+  iconButton: { marginRight: 15, padding: 8 },
   scrollView: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
   
   userCard: {
