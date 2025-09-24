@@ -1,11 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withTiming
+} from 'react-native-reanimated';
 import apiService from '../services/api';
 
-// DRY: Menu items configuration
+// Constants
 const MENU_ITEMS = [
   { id: 'my-buses', title: 'My Buses', icon: 'bus', route: '/sideNavScreens/my-buses' },
   { id: 'schedule', title: 'Schedule', icon: 'calendar', route: '/sideNavScreens/schedule' },
@@ -16,7 +21,6 @@ const MENU_ITEMS = [
   { id: 'help', title: 'Help & Support', icon: 'help-circle', route: '/sideNavScreens/help-support' },
 ] as const;
 
-// DRY: Bus data configuration
 const BUS_DATA = [
   { id: 'KB-01', route: 'Kochi → Bangalore', status: 'active', passengers: 45, revenue: '₹12,500' },
   { id: 'KB-02', route: 'Kochi → Chennai', status: 'maintenance', passengers: 0, revenue: '₹0' },
@@ -31,15 +35,38 @@ interface BusOwnerDetails {
   hasCompletedOnboarding: boolean;
 }
 
-export default function Dashboard() {
-  const [isSideNavOpen, setIsSideNavOpen] = useState(false);
-  const [busOwnerDetails, setBusOwnerDetails] = useState<BusOwnerDetails | null>(null);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(true);
-  const [showVerificationModal, setShowVerificationModal] = useState(false);
+// Custom hook for side navigation animation
+const useSideNavAnimation = () => {
+  const translateX = useSharedValue(300);
+  const opacity = useSharedValue(0);
+  const backgroundOpacity = useSharedValue(0);
 
-  // Load bus owner details on component mount
+  const animate = useCallback((isOpen: boolean) => {
+    translateX.value = withTiming(isOpen ? 0 : 300, { duration: 300 });
+    opacity.value = withTiming(isOpen ? 1 : 0, { duration: 300 });
+    backgroundOpacity.value = withTiming(isOpen ? 1 : 0, { duration: 200 });
+  }, [translateX, opacity, backgroundOpacity]);
+
+  const sideNavStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+    opacity: opacity.value,
+  }));
+
+  const backgroundStyle = useAnimatedStyle(() => ({
+    opacity: backgroundOpacity.value,
+  }));
+
+  return { animate, sideNavStyle, backgroundStyle };
+};
+
+// Custom hook for bus owner data
+const useBusOwnerData = () => {
+  const [data, setData] = useState<BusOwnerDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+
   useEffect(() => {
-    const loadBusOwnerDetails = async () => {
+    const loadData = async () => {
       try {
         const response = await apiService.getCurrentUser();
         
@@ -47,7 +74,7 @@ export default function Dashboard() {
           const profile = response.data.user.profile;
           const hasCompletedOnboarding = profile.has_completed_onboarding || false;
           
-          setBusOwnerDetails({
+          setData({
             busOwnerName: profile.bus_owner_name || '',
             busName: profile.bus_name || '',
             busNumber: profile.bus_number || '',
@@ -55,56 +82,86 @@ export default function Dashboard() {
             hasCompletedOnboarding,
           });
 
-          // Show verification modal only if user completed onboarding AND hasn't seen the modal before
           if (hasCompletedOnboarding && 
               profile.bus_owner_name && 
               profile.bus_name && 
               profile.bus_number && 
               profile.rc_book_number && 
               !profile.has_seen_verification_modal) {
-            setShowVerificationModal(true);
+            setShowModal(true);
           }
         }
       } catch (error) {
         console.error('Error loading bus owner details:', error);
       } finally {
-        setIsLoadingDetails(false);
+        setLoading(false);
       }
     };
 
-    loadBusOwnerDetails();
+    loadData();
   }, []);
 
-  const toggleSideNav = () => {
-    setIsSideNavOpen(!isSideNavOpen);
-  };
-
-  const closeSideNav = () => {
-    setIsSideNavOpen(false);
-  };
-
-  const handleCloseVerificationModal = async () => {
-    // Mark that the verification modal has been seen on the server
+  const closeModal = useCallback(async () => {
     try {
       await apiService.markVerificationModalSeen();
     } catch (error) {
       console.error('Error marking verification modal as seen:', error);
     }
-    setShowVerificationModal(false);
-  };
+    setShowModal(false);
+  }, []);
 
-  // DRY: Generic navigation handler
-  const navigateToScreen = (route: string, closeNav = true) => {
+  return { data, loading, showModal, closeModal };
+};
+
+export default function Dashboard() {
+  const [isSideNavOpen, setIsSideNavOpen] = useState(false);
+  const { data: busOwnerDetails, loading: isLoadingDetails, showModal: showVerificationModal, closeModal: handleCloseVerificationModal } = useBusOwnerData();
+  const { animate: animateSideNav, sideNavStyle: sideNavAnimatedStyle, backgroundStyle: backgroundAnimatedStyle } = useSideNavAnimation();
+
+  const toggleSideNav = useCallback(() => {
+    const newState = !isSideNavOpen;
+    setIsSideNavOpen(newState);
+    animateSideNav(newState);
+  }, [isSideNavOpen, animateSideNav]);
+
+  const closeSideNav = useCallback(() => {
+    setIsSideNavOpen(false);
+    animateSideNav(false);
+  }, [animateSideNav]);
+
+  const navigateToScreen = useCallback((route: string, closeNav = true) => {
     if (closeNav) closeSideNav();
     router.push(route);
-  };
+  }, [closeSideNav]);
 
-  const navigateToBusDetails = (busId: string) => {
+  const navigateToBusDetails = useCallback((busId: string) => {
     navigateToScreen(`/sideNavScreens/bus-details/${busId}`, false);
-  };
+  }, [navigateToScreen]);
 
-  // DRY: Reusable components
-  const renderMenuItem = (item: (typeof MENU_ITEMS)[number]) => (
+  const handleLogout = useCallback(async () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Logout", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await apiService.logout();
+              router.replace('/(auth)');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  }, []);
+
+  // Render functions
+  const renderMenuItem = useCallback((item: typeof MENU_ITEMS[number]) => (
     <TouchableOpacity
       key={item.id}
       style={styles.sideNavItem}
@@ -113,9 +170,9 @@ export default function Dashboard() {
       <Ionicons name={item.icon as any} size={20} color="#6B46C1" />
       <Text style={styles.sideNavItemText}>{item.title}</Text>
     </TouchableOpacity>
-  );
+  ), [navigateToScreen]);
 
-  const renderBusCard = (bus: (typeof BUS_DATA)[number]) => (
+  const renderBusCard = useCallback((bus: typeof BUS_DATA[number]) => (
     <TouchableOpacity
       key={bus.id}
       style={styles.tripItem}
@@ -137,29 +194,7 @@ export default function Dashboard() {
         <Text style={styles.tripStatusText}>{bus.status}</Text>
       </View>
     </TouchableOpacity>
-  );
-
-  const handleLogout = async () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Logout", 
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await apiService.logout();
-              router.replace('/(auth)');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to logout. Please try again.');
-            }
-          }
-        }
-      ]
-    );
-  };
+  ), [navigateToBusDetails]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -168,23 +203,23 @@ export default function Dashboard() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.greeting}>
-            Hi, {isLoadingDetails ? 'Loading...' : (busOwnerDetails?.busOwnerName || 'Owner')}!
-          </Text>
-        </View>
-        <View style={styles.headerIcons}>
+          <TouchableOpacity onPress={toggleSideNav} style={styles.menuButton}>
+            <Ionicons name="menu" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton}>
             <Ionicons name="notifications" size={24} color="#FFFFFF" />
             <View style={styles.notificationDot} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={toggleSideNav} style={styles.menuButton}>
-            <Ionicons name="menu" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
+        </View>
+        <View style={styles.headerRight}>
+          <Text style={styles.greeting}>
+            Hi, {isLoadingDetails ? 'Loading...' : (busOwnerDetails?.busOwnerName || 'Owner')}!
+          </Text>
         </View>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Revenue Live Update Card */}
+        {/* Revenue Card */}
         <TouchableOpacity style={styles.revenueCard} onPress={() => navigateToScreen('/sideNavScreens/revenue-details', false)}>
           <Text style={styles.cardTitle}>Revenue Live Update</Text>
           <Text style={styles.revenueAmount}>₹12,350</Text>
@@ -236,7 +271,7 @@ export default function Dashboard() {
           </View>
         </View>
 
-        {/* Notifications & Alerts */}
+        {/* Notifications */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Notifications & Alerts</Text>
@@ -261,18 +296,18 @@ export default function Dashboard() {
         </View>
       </ScrollView>
 
-      {/* Side Navigation */}
+      {/* Side Navigation Modal */}
       <Modal
         visible={isSideNavOpen}
         transparent={true}
-        animationType="slide"
+        animationType="none"
         onRequestClose={closeSideNav}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.blurBackground}>
+          <Animated.View style={[styles.blurBackground, backgroundAnimatedStyle]}>
             <TouchableOpacity style={styles.modalBackground} onPress={closeSideNav} />
-          </View>
-          <View style={styles.sideNav}>
+          </Animated.View>
+          <Animated.View style={[styles.sideNav, sideNavAnimatedStyle]}>
             <View style={styles.sideNavHeader}>
               <View>
                 <Text style={styles.sideNavTitle}>Menu</Text>
@@ -298,7 +333,7 @@ export default function Dashboard() {
                 <Text style={[styles.sideNavItemText, styles.logoutText]}>Logout</Text>
               </TouchableOpacity>
             </ScrollView>
-      </View>
+          </Animated.View>
         </View>
       </Modal>
 
@@ -307,20 +342,17 @@ export default function Dashboard() {
         visible={showVerificationModal}
         transparent={true}
         animationType="fade"
-        onRequestClose={() => setShowVerificationModal(false)}
+        onRequestClose={handleCloseVerificationModal}
       >
         <View style={styles.verificationModalOverlay}>
           <View style={styles.verificationModalContainer}>
             <View style={styles.verificationModalContent}>
-              {/* Success Icon */}
               <View style={styles.verificationIconContainer}>
                 <Ionicons name="checkmark-circle" size={60} color="#10B981" />
               </View>
               
-              {/* Title */}
               <Text style={styles.verificationTitle}>Information Submitted Successfully!</Text>
               
-              {/* Message */}
               <Text style={styles.verificationMessage}>
                 Thank you for completing your profile setup. Your provided information has been submitted for verification to the relevant authorities.
               </Text>
@@ -329,7 +361,6 @@ export default function Dashboard() {
                 You will be notified once the verification process is complete. In the meantime, you can explore the dashboard and manage your bus operations.
               </Text>
               
-              {/* Close Button */}
               <TouchableOpacity
                 style={styles.verificationCloseButton}
                 onPress={handleCloseVerificationModal}
@@ -348,10 +379,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   header: { backgroundColor: '#6B46C1', paddingTop: 50, paddingBottom: 20, paddingHorizontal: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   headerLeft: { flexDirection: 'row', alignItems: 'center' },
-  menuButton: { marginLeft: 15 },
+  headerRight: { flexDirection: 'row', alignItems: 'center' },
+  menuButton: { marginRight: 15 },
   greeting: { fontSize: 24, fontWeight: 'bold', color: '#FFFFFF' },
-  headerIcons: { flexDirection: 'row', alignItems: 'center' },
-  iconButton: { marginLeft: 15, position: 'relative' },
+  iconButton: { marginRight: 15, position: 'relative' },
   notificationDot: { position: 'absolute', top: -2, right: -2, width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444' },
   scrollView: { flex: 1, paddingHorizontal: 20 },
   revenueCard: { backgroundColor: '#6B46C1', borderRadius: 16, padding: 24, marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4 },
@@ -390,7 +421,6 @@ const styles = StyleSheet.create({
   sideNavItemText: { fontSize: 16, color: '#374151', marginLeft: 15, fontWeight: '500' },
   logoutItem: { marginTop: 20, borderTopWidth: 1, borderTopColor: '#E5E7EB' },
   logoutText: { color: '#EF4444' },
-  // Bus Owner Details Styles
   busOwnerCard: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
   busOwnerHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   busOwnerTitle: { fontSize: 18, fontWeight: 'bold', color: '#374151', marginLeft: 8, fontFamily: 'ArquitectaBold' },
@@ -398,7 +428,6 @@ const styles = StyleSheet.create({
   busOwnerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
   busOwnerLabel: { fontSize: 14, color: '#6B7280', fontWeight: '500', fontFamily: 'ArquitectaMedium' },
   busOwnerValue: { fontSize: 14, color: '#374151', fontWeight: '600', fontFamily: 'ArquitectaBold' },
-  // Verification Modal Styles
   verificationModalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
   verificationModalContainer: { backgroundColor: '#FFFFFF', borderRadius: 20, width: '100%', maxWidth: 400, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 20, elevation: 10 },
   verificationModalContent: { padding: 30, alignItems: 'center' },
